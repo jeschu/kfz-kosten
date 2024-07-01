@@ -2,9 +2,12 @@ default: show-config
 
 show-config:
 	@echo ">> show-config <<"
-	@echo "=== ~/Library/Application\ Support/kfzs.yml ==="
-	@cat ~/Library/Application\ Support/kfzs.yml
-	@echo "--- ~/Library/Application\ Support/kfzs.yml ---"
+	@echo "=== ~/Library/Application\ Support/kfzs.yaml ==="
+	@cat $(HOME)/Library/Application\ Support/kfzs.yaml
+	@echo "--- ~/Library/Application\ Support/kfzs.yaml ---"
+
+edit-config:
+	@code $(HOME)/Library/Application\ Support/kfzs.yaml
 
 clean:
 	@echo ">> clean <<"
@@ -16,7 +19,8 @@ generate:
 
 build: generate
 	@echo ">> build <<"
-	@go build -o "build/kfz" ./...
+	@mkdir -p build
+	@go build -o "build" ./...
 
 install: clean build
 	@echo ">> install <<"

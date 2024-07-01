@@ -21,6 +21,7 @@ type Kosten struct {
 	Kategorie        string        `yaml:"kategorie"`
 	AbschreibungKm   int           `yaml:"abschreibung_km"`
 	AbschreibungZeit time.Duration `yaml:"abschreibung_zeit"`
+	AbschreibungFa   bool          `yaml:"abschreibung_fa"`
 	Kosten           float64       `yaml:"kosten"`
 	Notiz            string        `yaml:"notiz"`
 }
@@ -98,11 +99,12 @@ func (kfz *Kfz) StatTanken() (float64, float64, float64) {
 	return liter, kmMax - kmMin, kosten
 }
 
-func (kfz *Kfz) StatKosten() (float64, float64) {
+func (kfz *Kfz) StatKosten() (float64, float64, float64) {
 	heute := time.Now().Truncate(24 * time.Hour)
 	kmInt, _ := kfz.MaxKm()
 	km := float64(kmInt)
 	anteilKosten := 0.0
+	anteilKostenFa := 0.0
 	totalKosten := 0.0
 	for _, kst := range kfz.Kosten {
 		kosten := kst.Kosten
@@ -113,23 +115,40 @@ func (kfz *Kfz) StatKosten() (float64, float64) {
 			d := heute.Sub(kst.Datum)
 			if d > abschreibungZeit {
 				anteilKosten += kosten
+				if kst.AbschreibungFa {
+					anteilKostenFa += kosten
+				}
 			} else {
-				anteilKosten += kosten / float64(abschreibungZeit/d)
+				anteil := kosten / float64(abschreibungZeit/d)
+				anteilKosten += anteil
+				if kst.AbschreibungFa {
+					anteilKostenFa += anteil
+				}
 			}
 		} else if abschreibungKm > 0.0 {
 			kostenStart := float64(kst.Km)
 			if kostenStart+abschreibungKm > km {
 				anteilKosten += kosten
+				if kst.AbschreibungFa {
+					anteilKostenFa += kosten
+				}
 			} else {
 				kstKm := float64(kst.Km)
 				anteilKm := km - kstKm
-				anteilKosten += kosten / (anteilKm / abschreibungKm)
+				anteil := kosten / (anteilKm / abschreibungKm)
+				anteilKosten += anteil
+				if kst.AbschreibungFa {
+					anteilKostenFa += anteil
+				}
 			}
 		} else {
 			anteilKosten += kosten
+			if kst.AbschreibungFa {
+				anteilKostenFa += kosten
+			}
 		}
 	}
-	return totalKosten, anteilKosten
+	return totalKosten, anteilKosten, anteilKostenFa
 }
 
 func LoadKfzs() (Kfzs, error) {
