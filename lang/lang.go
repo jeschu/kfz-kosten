@@ -20,17 +20,6 @@ func FixedString(str string, size int, ellipse string) string {
 		return str + strings.Repeat(" ", size-l)
 	}
 }
-func FixedString_(str string, size int, ellipse string) string {
-	l := utf8.RuneCountInString(str)
-	el := utf8.RuneCountInString(ellipse)
-	if l == size {
-		return str
-	} else if l > size {
-		return str[:size-el] + ellipse
-	} else {
-		return str + strings.Repeat(" ", size-l)
-	}
-}
 
 const (
 	secsMinute = float64(60)

@@ -21,7 +21,7 @@ type Kosten struct {
 	Kategorie        string        `yaml:"kategorie"`
 	AbschreibungKm   int           `yaml:"abschreibung_km"`
 	AbschreibungZeit time.Duration `yaml:"abschreibung_zeit"`
-	AbschreibungFa   bool          `yaml:"abschreibung_fa"`
+	AbschreibungFa   Finanzamt     `yaml:"abschreibung_fa"`
 	Kosten           float64       `yaml:"kosten"`
 	Notiz            string        `yaml:"notiz"`
 }
@@ -32,6 +32,14 @@ const (
 	Erst TankArt = iota
 	Teil
 	Voll
+)
+
+type Finanzamt int
+
+const (
+	Nein Finanzamt = iota
+	Ja
+	Abschreibung
 )
 
 type Tanken struct {
@@ -115,21 +123,23 @@ func (kfz *Kfz) StatKosten() (float64, float64, float64) {
 			d := heute.Sub(kst.Datum)
 			if d > abschreibungZeit {
 				anteilKosten += kosten
-				if kst.AbschreibungFa {
+				if kst.AbschreibungFa != Nein {
 					anteilKostenFa += kosten
 				}
 			} else {
 				anteil := kosten / float64(abschreibungZeit/d)
 				anteilKosten += anteil
-				if kst.AbschreibungFa {
+				if kst.AbschreibungFa == Abschreibung {
 					anteilKostenFa += anteil
+				} else if kst.AbschreibungFa == Ja {
+					anteilKostenFa += kosten
 				}
 			}
 		} else if abschreibungKm > 0.0 {
 			kostenStart := float64(kst.Km)
 			if kostenStart+abschreibungKm > km {
 				anteilKosten += kosten
-				if kst.AbschreibungFa {
+				if kst.AbschreibungFa != Nein {
 					anteilKostenFa += kosten
 				}
 			} else {
@@ -137,13 +147,15 @@ func (kfz *Kfz) StatKosten() (float64, float64, float64) {
 				anteilKm := km - kstKm
 				anteil := kosten / (anteilKm / abschreibungKm)
 				anteilKosten += anteil
-				if kst.AbschreibungFa {
+				if kst.AbschreibungFa == Abschreibung {
 					anteilKostenFa += anteil
+				} else if kst.AbschreibungFa == Ja {
+					anteilKostenFa += kosten
 				}
 			}
 		} else {
 			anteilKosten += kosten
-			if kst.AbschreibungFa {
+			if kst.AbschreibungFa != Nein {
 				anteilKostenFa += kosten
 			}
 		}

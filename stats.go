@@ -25,7 +25,7 @@ func PrintStats(kfz model.Kfz) {
 	totalKosten, anteilKosten, anteilKostenFa := kfz.StatKosten()
 	_ = anteilKostenFa
 	fmt.Println("  Tanken - Aufstellung:")
-	fmt.Println("    | Datum      | Tachostand | Preis      | Liter  | €/l       | Distanz | l/100km |")
+	fmt.Println("    | Datum      | Tachostand | Preis      | Liter  | €/l       | Distanz | l/100km  | l/100km |")
 	sort.SliceStable(kfz.Tanken, func(i, j int) bool {
 		return false
 	})
@@ -51,15 +51,24 @@ func PrintStats(kfz model.Kfz) {
 		if tanken.Art != model.Erst {
 			sumLiter += tanken.Liter
 		}
-		fmt.Printf("    | %s | %8dkm | %8.2f € | %5.2fl | %5.3f €/l | %s | %7.2f | %7.2f |\n",
+		verbrauchSeitTanken := tanken.Liter / (float64(distanz) / 100.)
+		verbrauchBisher := sumLiter / (float64(sumDistanz) / 100.)
+		verbrauchSym := "➡"
+		if verbrauchSeitTanken > verbrauchBisher {
+			verbrauchSym = "⬆"
+		} else if verbrauchSeitTanken < verbrauchBisher {
+			verbrauchSym = "⬇"
+		}
+		fmt.Printf("    | %s | %8dkm | %8.2f € | %5.2fl | %5.3f €/l | %s | %6.2f %s | %7.2f |\n",
 			tanken.Datum.Format("02.01.2006"),
 			tanken.Km,
 			tanken.Kosten,
 			tanken.Liter,
 			tanken.Kosten/tanken.Liter,
 			lastKmStr,
-			tanken.Liter/(float64(distanz)/100.),
-			sumLiter/(float64(sumDistanz)/100.),
+			verbrauchSeitTanken,
+			verbrauchSym,
+			verbrauchBisher,
 		)
 		lastKm = tanken.Km
 	}
@@ -90,8 +99,13 @@ func PrintStats(kfz model.Kfz) {
 		lang.FixedString("Abschreibung", abschreibungLen, ""))
 	for _, line := range abschreibungen {
 		fa := " "
-		if line.kosten.AbschreibungFa {
+		switch line.kosten.AbschreibungFa {
+		case model.Ja:
 			fa = "✓"
+		case model.Nein:
+			fa = "𐄂"
+		case model.Abschreibung:
+			fa = "⏲"
 		}
 		fmt.Printf("    | %s | %8dkm | %8.2f € | %s | %s | %s | %s |\n",
 			line.kosten.Datum.Format("02.01.2006"),
