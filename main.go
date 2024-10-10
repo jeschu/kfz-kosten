@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"kfz-kosten/model"
 	"log"
 )
@@ -10,7 +11,13 @@ func main() {
 	if err != nil {
 		log.Printf("Error loading Kfzs: %v", err)
 	}
-	PrintStats(kfzs["Mini"])
+
+	fmt.Println("")
+
+	for _, kfz := range kfzs {
+		kfz.PrintStats()
+	}
+
 	if err := model.SaveKfzs(kfzs); err != nil {
 		log.Printf("Error saving Kfzs: %v", err)
 	}

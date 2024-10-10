@@ -1,10 +1,9 @@
-package main
+package model
 
 import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"kfz-kosten/lang"
-	"kfz-kosten/model"
 	"sort"
 	"strings"
 	"time"
@@ -13,17 +12,24 @@ import (
 var fmt = message.NewPrinter(language.German)
 
 //goland:noinspection GoUnhandledErrorResult
-func PrintStats(kfz model.Kfz) {
+func (kfz *Kfz) PrintStats() {
+	kfz.printHeader()
+	fmt.Println()
+	kfz.printKosten()
+	kfz.printTanken()
+	fmt.Println()
+	kfz.printSummary()
+}
+
+//goland:noinspection GoUnhandledErrorResult
+func (kfz *Kfz) printHeader() {
 	label := fmt.Sprintf("%s [ %s ]", kfz.Name, kfz.Kennzeichen)
 	fmt.Println(label)
 	fmt.Println(strings.Repeat("=", len(label)))
-	fmt.Println()
-	minKm, minDatum := kfz.MinKm()
-	maxKm, maxDatum := kfz.MaxKm()
-	gefahrenKm := float64(maxKm - minKm)
-	liter, km, kostenTanken := kfz.StatTanken()
-	totalKosten, anteilKosten, anteilKostenFa := kfz.StatKosten()
-	_ = anteilKostenFa
+}
+
+//goland:noinspection GoUnhandledErrorResult
+func (kfz *Kfz) printTanken() {
 	fmt.Println("  Tanken - Aufstellung:")
 	fmt.Println("    | Datum      | Tachostand | Preis      | Liter  | €/l       | Distanz | l/100km  | l/100km |")
 	sort.SliceStable(kfz.Tanken, func(i, j int) bool {
@@ -37,7 +43,7 @@ func PrintStats(kfz model.Kfz) {
 		if lastKm == -1 {
 			lastKm = tanken.Km
 		}
-		if startKm == -1 && tanken.Art == model.Voll {
+		if startKm == -1 && tanken.Art == Voll {
 			startKm = tanken.Km
 		}
 		distanz := tanken.Km - lastKm
@@ -48,7 +54,7 @@ func PrintStats(kfz model.Kfz) {
 		} else {
 			lastKmStr = "    -  "
 		}
-		if tanken.Art != model.Erst {
+		if tanken.Art != Erst {
 			sumLiter += tanken.Liter
 		}
 		verbrauchSeitTanken := tanken.Liter / (float64(distanz) / 100.)
@@ -72,7 +78,10 @@ func PrintStats(kfz model.Kfz) {
 		)
 		lastKm = tanken.Km
 	}
+}
 
+//goland:noinspection GoUnhandledErrorResult
+func (kfz *Kfz) printKosten() {
 	fmt.Println("  Kosten - Aufstellung:")
 	sort.SliceStable(kfz.Kosten, func(i, j int) bool {
 		return false
@@ -100,11 +109,11 @@ func PrintStats(kfz model.Kfz) {
 	for _, line := range abschreibungen {
 		fa := " "
 		switch line.kosten.AbschreibungFa {
-		case model.Ja:
+		case Ja:
 			fa = "✓"
-		case model.Nein:
+		case Nein:
 			fa = "𐄂"
-		case model.Abschreibung:
+		case Abschreibung:
 			fa = "⏲"
 		}
 		fmt.Printf("    | %s | %8dkm | %8.2f € | %s | %s | %s | %s |\n",
@@ -117,8 +126,16 @@ func PrintStats(kfz model.Kfz) {
 			lang.FixedString(line.kosten.Notiz, 20, "…"),
 		)
 	}
+}
 
-	fmt.Println()
+//goland:noinspection GoUnhandledErrorResult
+func (kfz *Kfz) printSummary() {
+	minKm, minDatum := kfz.MinKm()
+	maxKm, maxDatum := kfz.MaxKm()
+	gefahrenKm := float64(maxKm - minKm)
+	liter, km, kostenTanken := kfz.StatTanken()
+	totalKosten, anteilKosten, anteilKostenFa := kfz.StatKosten()
+
 	fmt.Printf("  Start:    %9d km (%s)\n", minKm, minDatum.Format("02.01.2006"))
 	fmt.Printf("  Aktuell:  %9d km (%s)\n", maxKm, maxDatum.Format("02.01.2006"))
 	tage := time.Now().Sub(minDatum).Hours() / 24
@@ -138,11 +155,9 @@ func PrintStats(kfz model.Kfz) {
 		kostenTanken+anteilKosten, (kostenTanken+anteilKosten)/gefahrenKm,
 		kostenTanken+anteilKostenFa, (kostenTanken+anteilKostenFa)/gefahrenKm,
 	)
-	fmt.Println()
-
 }
 
 type kostenAbschreibung struct {
-	kosten       *model.Kosten
+	kosten       *Kosten
 	abschreibung string
 }
