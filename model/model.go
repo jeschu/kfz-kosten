@@ -28,6 +28,19 @@ type Kosten struct {
 
 type TankArt int
 
+func (t TankArt) String() string {
+	switch t {
+	case Voll:
+		return "Vollbetankung"
+	case Teil:
+		return "Teilbetankung"
+	case Erst:
+		return "Erstbetankung"
+	default:
+		return "?"
+	}
+}
+
 const (
 	Erst TankArt = iota
 	Teil
