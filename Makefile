@@ -25,3 +25,8 @@ build: generate
 install: clean build
 	@echo ">> install <<"
 	@go install ./...
+
+dependencies-upgrade:
+	@echo ">> dependencies-upgrade <<"
+	@go get -u ./...
+	@go mod tidy
