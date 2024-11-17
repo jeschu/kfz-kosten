@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/xuri/excelize/v2"
 	"kfz-kosten/input"
 	"kfz-kosten/model"
 	"log"
 	"strconv"
+	"time"
 )
 
 type actionType int
@@ -16,6 +18,8 @@ func (a actionType) String() string {
 		return "Tanken erfassen"
 	case actionKosten:
 		return "Kosten erfassen"
+	case actionExcel:
+		return "Excel Export"
 	case actionSummary:
 		return "Übersicht anzeigen"
 	default:
@@ -26,6 +30,7 @@ func (a actionType) String() string {
 const (
 	actionTanken actionType = iota
 	actionKosten
+	actionExcel
 	actionSummary
 )
 
@@ -44,12 +49,13 @@ func main() {
 	for loop {
 		fmt.Printf("[t] %s\n", actionTanken)
 		fmt.Printf("[k] %s\n", actionKosten)
+		fmt.Printf("[e] %s\n", actionExcel)
 		fmt.Printf("[␍] %s\n", actionSummary)
 		action := input.ReadSelectionMapped(
 			"Was möchtest du tun? ",
-			map[string]actionType{"t": actionTanken, "k": actionKosten},
+			map[string]actionType{"t": actionTanken, "k": actionKosten, "e": actionExcel},
 			actionSummary,
-			"t", "k", input.CR,
+			"t", "k", "e", input.CR,
 		)
 		fmt.Print("\n\n")
 		switch action {
@@ -57,6 +63,8 @@ func main() {
 			tanken(kfz)
 		case actionKosten:
 			kosten(kfz)
+		case actionExcel:
+			excel(kfz)
 		case actionSummary:
 			loop = false
 		}
@@ -92,4 +100,22 @@ func tanken(kfz model.Kfz) {
 
 func kosten(kfz model.Kfz) {
 	fmt.Println("Kosten erfassen:")
+}
+
+func excel(kfz model.Kfz) {
+	var err error
+	f := excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	sheetName := strconv.Itoa(time.Now().Year())
+	sheetIndex := f.GetActiveSheetIndex()
+	f.SetSheetName(f.GetSheetName(sheetIndex), sheetName)
+	f.SetCellStr(sheetName, "A1", "KFZ Kosten "+sheetName+" - "+kfz.Name+" ["+kfz.Kennzeichen+"]")
+	f.SetActiveSheet(sheetIndex)
+	if err = f.SaveAs("KFZ_" + sheetName + ".xlsx"); err != nil {
+		log.Println(err)
+	}
 }

@@ -1,3 +1,4 @@
+*.xlsx
 kfz-kosten
 # Binaries for programs and plugins
 *.exe
