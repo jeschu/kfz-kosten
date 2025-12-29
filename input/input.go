@@ -40,6 +40,8 @@ func Read[T any](msg string, mapper func(string) (T, error)) T {
 		}
 	}
 }
+func ReadInt(msg string) int         { return Read[int](msg, ParseInt) }
+func ReadFloat64(msg string) float64 { return Read[float64](msg, ParseFloat64) }
 
 func ReadSelectionMapped[T any](msg string, mapping map[string]T, defaultValue T, options ...string) T {
 	mapper := func(s string) T {
@@ -162,4 +164,10 @@ func restore(state *term.State) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ParseFloat64(s string) (float64, error) { return strconv.ParseFloat(NormalizeGermanNumber(s), 64) }
+func ParseInt(s string) (int, error)         { return strconv.Atoi(NormalizeGermanNumber(s)) }
+func NormalizeGermanNumber(str string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(str, ".", ""), ",", ".")
 }
